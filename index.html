@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Høreapparat-formidlere adresser med hurtigkopiering til robot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1550px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #1a365d;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #3182ce;
+        }
+        .fylke-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .fylke-title {
+            color: #2b6cb0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+            margin-top: 0;
+            text-transform: uppercase;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+        /* Tvinger alle tabeller til å følge nøyaktig samme kolonnebredder */
+            table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed; /* MEGET VIKTIG: Låser bredden på kolonnene på tvers av alle seksjoner */
+        }
+        th:nth-child(1), td:nth-child(1) { width: 25%; } /* Adresse-kolonnen */
+        th:nth-child(2), td:nth-child(2) { width: 20%; } /* Klassifisering & Spesialist */
+        th:nth-child(3), td:nth-child(3) { width: 35%; } /* Knappene (Vedtaksrobot) */
+        th:nth-child(4), td:nth-child(4) { width: 20%; } /* Merknader */
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+    vertical-align: top;
+    word-wrap: break-word; /* Sørger for at lang tekst ikke dytter på kolonnebredden */
+}
+        th {
+            background-color: #ebf8ff;
+            color: #2c5282;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f7fafc;
+        }
+        
+        tr.avtale-row {
+            border-left: 4px solid #31c48d;
+        }
+        tr.privat-row {
+            border-left: 4px solid #e02424; /* Dette gir den røde streken helt til venstre */
+        }
+        /* Ny rad-farge helt til venstre (Lilla strek) */
+        tr.lege-uten-avtale-row {
+            border-left: 4px solid #805ad5; 
+        }
+        tr.sykehus-row {
+            border-left: 4px solid #4b5563;
+        }
+
+        .address-block {
+            line-height: 1.4;
+            font-weight: bold;
+            color: #1a202c;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+/* Rød badge som matcher formen og stilen til de andre helt likt */
+        .badge-privat {
+            background-color: #fde8e8; /* Lys rød bakgrunn */
+            color: #9b1c1c;            /* Mørk rød tekst */
+            border: 1px solid #f8b4b4; /* Tynn rød ramme som matcher avtale-badgen */
+        }
+        /* Ny badge-stil (Lys lilla bakgrunn med mørk lilla skrift) */
+        .badge-lege-uten-avtale {
+        background-color: #f3e8ff; /* Lys lilla */
+        color: #6b21a8;            /* Mørk lilla tekst */
+        border: 1px solid #d8b4fe; /* Tynn lilla ramme */
+         }
+        .badge-sykehus {
+            background-color: #e5e7eb;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        .badge-avtale {
+            background-color: #def7ec;
+            color: #03543f;
+            border: 1px solid #bdf2d5;
+        }
+        
+        .spesialist-felt {
+            margin-top: 5px;
+        }
+        .spesialist-navn {
+            font-size: 13px;
+            font-weight: bold;
+            color: #046c4e;
+        }
+        .spesialist-tlf {
+            font-size: 11px;
+            color: #4b5563;
+            margin-top: 1px;
+        }
+
+.btn-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%; /* Bruker hele kolonnens tilgjengelige bredde */
+    max-width: 480px;
+}
+.copy-btn {
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    text-align: left;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap; /* Holder alt på én linje per knapp */
+}
+        .copy-btn:hover {
+            opacity: 0.9;
+        }
+        .copy-btn.copied {
+            background-color: #48bb78 !important;
+        }
+        .btn-ha-b { background-color: #4a5568; }
+        .btn-ha-h { background-color: #718096; } 
+        .btn-ha-v { background-color: #a0aec0; } 
+        .btn-gj-b { background-color: #2b6cb0; }
+        .btn-gj-h { background-color: #dd6b20; }
+        .btn-gj-v { background-color: #b7791f; }
+        .btn-ti-f { background-color: #805ad5; }
+        .btn-ti-g { background-color: #b83280; }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            font-size: 18px;
+            color: #718096;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+
+<script>
+// Kjør denne funksjonen når siden laster
+document.addEventListener("DOMContentLoaded", () => {
+    lastInnData();
+});
+
+async function lastInnData() {
+    try {
+        // Henter JSON-filen (Sørg for at den ligger i samme mappe)
+        const response = await fetch('adresser.json');
+        const data = await response.json();
+        
+        byggHTML(data);
+    } catch (error) {
+        document.getElementById('listContainer').innerHTML = "<p>Kunne ikke laste adressedata. Sjekk at adresser.json finnes.</p>";
+        console.error("Feil ved lasting av JSON:", error);
+    }
+}
+
+function byggHTML(klinikker) {
+    const container = document.getElementById('listContainer');
+    
+    // Grupper klinikker per fylke
+    const fylker = {};
+    klinikker.forEach(k => {
+        if (!fylker[k.fylke]) fylker[k.fylke] = [];
+        fylker[k.fylke].push(k);
+    });
+
+    // Generer HTML
+    for (const [fylkeNavn, fylkeKlinikker] of Object.entries(fylker)) {
+        let html = `
+        <div class="fylke-section">
+            <h2 class="fylke-title">${fylkeNavn}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Samhandler / Mottakeradresse</th>
+                        <th>Klassifisering & Spesialist</th>
+                        <th>Hurtigkopiering til Vedtaksrobot</th>
+                        <th>Merknader</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        fylkeKlinikker.forEach(k => {
+            // Bygger adresseblokken for visning
+            let adresseVisning = `${k.klinikk}<br>`;
+            if (k.avdeling) adresseVisning += `${k.avdeling}<br>`;
+            adresseVisning += `${k.adresse}<br>${k.poststed}`;
+
+            // Spesialist-felt
+            let spesialistFelt = k.spesialister ? `<div class="spesialist-felt"><div class="spesialist-navn">${k.spesialister}</div></div>` : '';
+
+            // Legger til raden (Knappene forblir de samme som før)
+            html += `
+                <tr class="${k.radKlasse}">
+                    <td><div class="address-block">${adresseVisning}</div></td>
+                    <td>
+                        <span class="${k.badgeKlasse}">${k.badgeTekst}</span>
+                        ${spesialistFelt}
+                    </td>
+                    <td>
+                        <div class="btn-container">
+                            <button class="copy-btn btn-ha-b" onclick="copyTemplate(this, 'ha_b')">📋 Førstegangs BEGGE</button>
+                            <button class="copy-btn btn-gj-b" onclick="copyTemplate(this, 'gj_b')">📋 Gj.ansk BEGGE (6 år)</button>
+                            </div>
+                    </td>
+                    <td>${k.merknad}</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML += html;
+    }
+}    
+    // Opprinnelig tekstformat som genereres og kopieres til roboten
+    const templates = {
+        'ha_b': "innv. hø.app B\n\nSamhandler:\n[ADDRESS]",
+        'gj_b': "innv. gj.ansk hø.app B\n\nSamhandler:\n[ADDRESS]",
+        'ha_h': "innv. hø.app H\n\nSamhandler:\n[ADDRESS]",
+        'gj_h': "innv. gj.ansk hø.app H\n\nSamhandler:\n[ADDRESS]",
+        'ha_v': "innv. hø.app V\n\nSamhandler:\n[ADDRESS]",
+        'gj_v': "innv. gj.ansk hø.app V\n\nSamhandler:\n[ADDRESS]",
+        'ti_f': "innv. Tinnitusmaskerer\n\nSamhandler:\n[ADDRESS]",
+        'ti_g': "innv. gj.ansk Tinnitusmaskerer\n\nSamhandler:\n[ADDRESS]"
+    };
+
+function copyTemplate(button, templateType) {
+    const row = button.closest('tr');
+    
+    // Finner adresseblokken i gjeldende rad
+    const addressBlock = row.querySelector('.address-block');
+    if (!addressBlock) return;
+
+    // 1. Deler opp HTML-koden ved linjeskift (<br>) akkurat som i V11
+    const rawLines = addressBlock.innerHTML.split(/<br\s*\/?>/gi);
+    
+    // 2. Vasker hver enkelt linje for eventuelle gjenværende HTML-merker og fjerner unødig mellomrom
+    const cleanLines = rawLines.map(line => {
+        return line.replace(/<[^>]+>/g, '').trim();
+    }).filter(line => line !== ""); // fjerner tomme elementer
+
+    // 3. Identifiserer linjene dynamisk basert på hvor mange linjer som finnes (som i V11)
+    const klinikk = cleanLines[0] || '';
+    let avdeling = '';
+    let adresse = '';
+    let postSted = '';
+
+    if (cleanLines.length >= 4) {
+        avdeling = cleanLines[1] || '';
+        adresse = cleanLines[2] || '';
+        postSted = cleanLines[3] || '';
+    } else {
+        // Hvis avdeling mangler, forskyves linjene opp slik at vi unngår tomme linjeskift
+        adresse = cleanLines[1] || '';
+        postSted = cleanLines[2] || '';
+    }
+
+    // 4. Setter opp vedtakskode basert på mal-ID (fra V12-strukturen)
+    let vedtakKode = '';
+    switch(templateType) {
+        case 'ha_b': vedtakKode = 'innv. hø.app B'; break;
+        case 'ha_h': vedtakKode = 'innv. hø.app H'; break;
+        case 'ha_v': vedtakKode = 'innv. hø.app V'; break;
+        case 'gj_b': vedtakKode = 'innv. gj.ansk hø.app B'; break;
+        case 'gj_h': vedtakKode = 'innv. gj.ansk hø.app H'; break;
+        case 'gj_v': vedtakKode = 'innv. gj.ansk hø.app V'; break;
+        case 'ti_f': vedtakKode = 'innv. Tinnitusmaskerer'; break;
+        case 'ti_g': vedtakKode = 'innv. gj.ansk Tinnitusmaskerer'; break;
+        default: vedtakKode = '';
+    }
+
+    // 5. Bygger samhandlerblokken kompakt uten tomme linjer
+    let samhandlerBlokk = klinikk;
+    if (avdeling) samhandlerBlokk += `\n${avdeling}`;
+    if (adresse)  samhandlerBlokk += `\n${adresse}`;
+    if (postSted) samhandlerBlokk += `\n${postSted}`;
+
+    // Kombinerer til endelig robot-tekst
+    const fullOutputText = `${vedtakKode}\n\nSamhandler:\n${samhandlerBlokk}`;
+
+    // 6. Kopierer til utklippstavlen og gir visuell feedback på knappen
+    navigator.clipboard.writeText(fullOutputText).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✔️ Kopiert til robot!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+        }, 1500);
+    }).catch(err => {
+        alert('Kunne ikke kopiere automatisk: ' + err);
+    });
+}
+
+    // Søkefunksjon
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const fylkeSections = document.querySelectorAll('.fylke-section');
+        let totalVisibleSections = 0;
+
+        fylkeSections.forEach(section => {
+            const fylkeName = section.querySelector('.fylke-title').textContent.toLowerCase();
+            const rows = section.querySelectorAll('tbody tr');
+            let matchInRows = 0;
+
+            rows.forEach(row => {
+                const cells = row.getElementsByTagName('td');
+                let matchInCells = false;
+
+                for (let i = 0; i < cells.length; i++) {
+                    if (cells[i].textContent.toLowerCase().includes(searchTerm)) {
+                        matchInCells = true;
+                        break;
+                    }
+                }
+
+                if (fylkeName.includes(searchTerm) || matchInCells) {
+                    row.style.display = '';
+                    matchInRows++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (matchInRows > 0) {
+                section.style.display = 'block';
+                totalVisibleSections++;
+            } else {
+                section.style.display = 'none';
+            }
+        });
+
+        const noResultsMessage = document.getElementById('noResults');
+        if (totalVisibleSections === 0 && searchTerm !== '') {
+            noResultsMessage.style.display = 'block';
+        } else {
+            noResultsMessage.style.display = 'none';
+        }
+    });
+</script>
+
+</body>
+</html>
